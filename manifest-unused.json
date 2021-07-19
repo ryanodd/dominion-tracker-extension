@@ -17,9 +17,19 @@
    "default_title": "This is some placeholder tooltip text when hovering the extension icon"
   },
   "background": {
-    "service_worker": "serviceWorker.js",
-    "type": "module"
+    "service_worker": "serviceWorker.js"
   },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://dominion.games/*",
+        "https://dominiontracker.com/*"
+      ],
+      "js": ["watchLog.js"]
+    }
+  ],
+
   "permissions": [
    "activeTab",
    "scripting"
