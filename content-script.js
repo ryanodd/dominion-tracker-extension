@@ -1,4 +1,28 @@
 
+function attemptReadLog() {
+  let logSearchResults = document.getElementsByClassName('game-log')
+  if (logSearchResults.length === 1) {
+    wholeLog = logSearchResults[0].innerText
+    let iframe = document.querySelector('#dt-iframe')
+    iframe.contentWindow.postMessage(wholeLog, '*')
+  }
+}
+
+function watchLog() {
+  attemptReadLog()
+  let observer = new MutationObserver(mutations => {
+    for(let mutation of mutations) {
+      if (
+        mutation.target.className === 'log-line' &&
+        mutation.addedNodes.length >= 1
+      ) {
+        attemptReadLog()
+      }
+    }
+  });
+  observer.observe(document, { childList: true, subtree: true });
+}
+
 function injectOverlay() {
   const containerDivStyle = '\
     position: absolute;\
@@ -23,6 +47,7 @@ function injectOverlay() {
   iframe.id = 'dt-iframe'
   iframe.style = iframeStyle + 'display: none;'
   document.querySelector('#dt-container').append(iframe);
+  iframe.contentWindow.console = console;
 
   const buttonStyle = '\
     display: block;\
@@ -38,38 +63,21 @@ function injectOverlay() {
   toggleButton.style = buttonStyle
   toggleButton.onclick = () => {
     let detectedIframe = document.querySelector('#dt-iframe')
-    console.log(detectedIframe.style)
+
+    // silly way of storing state in the DOM; watchLog should only call once
+    if (detectedIframe.style.zIndex !== '69') {
+      detectedIframe.style.zIndex = '69'
+      watchLog()
+    }
+
     let isTrackerOpen = detectedIframe.style.display === 'inline'
     detectedIframe.style.display = isTrackerOpen ? 'none' : 'inline'
   }
   document.querySelector('#dt-container').append(toggleButton);
 }
 
-function watchLog() {
-  let iframe = document.querySelector('#dt-iframe')
-  iframe.contentWindow.console = console;
-  let observer = new MutationObserver(mutations => {
-    for(let mutation of mutations) {
-      if (
-        mutation.target.className === 'log-line' &&
-        mutation.addedNodes.length >= 1
-      ) {
-        let logSearchResults = document.getElementsByClassName('game-log')
-        if (logSearchResults.length === 1) {
-          wholeLog = logSearchResults[0].innerText
-          iframe.contentWindow.postMessage(wholeLog, '*')
-        } else {
-          console.error('TRACKER ERROR: saw log line added, but couldn\'t find game log.')
-        }
-      }
-    }
-  });
-  observer.observe(document, { childList: true, subtree: true });
-}
-
 try {
   injectOverlay()
-  watchLog()
 } catch (error) {
   console.error('Content-script error:', error)
 }
