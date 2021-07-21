@@ -20,6 +20,14 @@
     "service_worker": "serviceWorker.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://dominion.games/*"
+      ],
+      "js": ["content-script.js"]
+    }
+  ],
   "permissions": [
    "activeTab",
    "scripting"
